@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebBuilding</title>
+<link rel="icon" href="picture/logo.png">
+<link rel="stylesheet" href="page-builder.css">
+</head>
+<body>
+
+<!-- ============ 顶部工具栏 ============ -->
+<header id="toolbar">
+  <div class="logo"><img src="picture/logo.png" alt="WebBuilding"><span class="logo-name">WebBuilding</span></div>
+  <div class="spacer"></div>
+  <button class="tb-btn" id="btnHelp">帮助</button>
+  <button class="tb-btn" id="btnSnap">🧲 磁吸吸附: 关</button>
+  <button class="tb-btn" id="btnClear">清空画布</button>
+  <button class="tb-btn" id="btnPreview">👁 预览</button>
+  <button class="tb-btn primary" id="btnExport">⬇ 导出代码</button>
+  <span id="saveStatus"></span>
+</header>
+
+<div id="main">
+  <!-- 左侧：组件区 -->
+  <aside id="palette">
+    <div class="p-head">🧩 组件库</div>
+    <div class="p-sub">拖拽组件到右侧画布，或点击添加</div>
+    <div id="paletteList"></div>
+    <div class="p-hint">
+      💡 操作提示<br>
+      · 拖拽组件到画布任意位置（自由摆放）<br>
+      · 容器 Box / 网格布局 可拖入其它组件<br>
+      · 双击组件编辑文字<br>
+      · 右键组件：链接 / 删除等快捷操作<br>
+      · 复杂样式与动画请在右侧面板调整<br>
+      · 选中后拖拽 8 个角手柄可缩放
+    </div>
+    <div class="p-foot"><button id="btnPageSettings">⚙ 页面设置</button></div>
+  </aside>
+
+  <!-- 中间：编辑画布 -->
+  <div id="canvasWrap">
+    <div id="canvas">
+      <div class="dsh-hint">将左侧组件 <b>拖拽到这里</b> 开始制作网页</div>
+      <div id="selBox"></div>
+      <div id="dropLine"></div>
+      <div id="snapV"></div>
+      <div id="snapH"></div>
+    </div>
+  </div>
+
+  <!-- 组件目录 -->
+  <aside id="outline">
+    <div class="o-head">🗂 组件目录</div>
+    <div id="outlineList"></div>
+  </aside>
+
+  <!-- 右侧：属性面板 -->
+  <aside id="inspector">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="style">样式</button>
+      <button class="tab-btn" data-tab="anim">动画</button>
+      <button class="tab-btn" data-tab="page">页面</button>
+    </div>
+
+    <!-- 样式面板 -->
+    <div class="pane active" id="pane-style">
+      <div class="quick-actions">
+        <button class="qa-btn" id="btnEditText">✏️ 编辑文字</button>
+        <button class="qa-btn" id="btnCopyEl">📋 复制</button>
+        <button class="qa-btn danger" id="btnDeleteEl">🗑 删除</button>
+      </div>
+      <div class="note" id="styleEmpty">在画布中选择一个组件后，可在此调整样式。</div>
+
+      <div id="styleGroups" style="display:none">
+        <div class="igroup" id="g-text">
+          <div class="g-title">文本</div>
+          <div class="grow">
+            <div class="field"><label>字号(px)</label><input type="number" id="fz" min="8" max="200"></div>
+            <div class="field"><label>字重</label><select id="fw"><option value="">默认</option><option value="normal">常规</option><option value="bold">加粗</option><option value="600">半粗</option></select></div>
+            <div class="field"><label>对齐</label><select id="ta"><option value="">默认</option><option value="left">左</option><option value="center">中</option><option value="right">右</option></select></div>
+          </div>
+          <div class="grow" style="margin-top:8px">
+            <div class="field"><label>文字颜色</label><input type="color" id="cText" value="#000000"></div>
+            <div class="field"><label>行高</label><input type="number" id="lh" min="1" max="3" step="0.1"></div>
+            <div class="field"><label>字间距</label><input type="number" id="ls" min="-5" max="30"></div>
+          </div>
+        </div>
+
+        <div class="igroup" id="g-bg">
+          <div class="g-title">背景</div>
+          <div class="grow">
+            <div class="field"><label>背景颜色</label><input type="color" id="cBg" value="#ffffff"></div>
+            <div class="field wide"><label>背景图片 URL</label><input type="text" id="bgImg" placeholder="https://...（图片优先于渐变）"></div>
+            <div class="field wide"><label>渐变 (如 linear-gradient(135deg,#667eea,#764ba2))</label><input type="text" id="grad" placeholder="留空则用纯色"></div>
+          </div>
+        </div>
+
+        <div class="igroup">
+          <div class="g-title">边框</div>
+          <div class="grow">
+            <div class="field"><label>宽度(px)</label><input type="number" id="bw" min="0" max="30"></div>
+            <div class="field"><label>样式</label><select id="bs"><option value="">无</option><option value="solid">实线</option><option value="dashed">虚线</option><option value="dotted">点线</option></select></div>
+            <div class="field"><label>颜色</label><input type="color" id="bc" value="#000000"></div>
+          </div>
+          <div class="grow" style="margin-top:8px">
+            <div class="field"><label>圆角(px)</label><input type="number" id="br" min="0" max="200"></div>
+            <div class="field"><label>阴影</label><select id="shSel"><option value="">无</option><option value="0 1px 3px rgba(0,0,0,.12)">小</option><option value="0 4px 12px rgba(0,0,0,.18)">中</option><option value="0 12px 32px rgba(0,0,0,.25)">大</option><option value="custom">自定义…</option></select></div>
+            <div class="field wide" id="shCustomWrap" style="display:none"><label>自定义阴影</label><input type="text" id="shCustom" placeholder="0 4px 12px rgba(0,0,0,.2)"></div>
+          </div>
+        </div>
+
+        <div class="igroup">
+          <div class="g-title">尺寸 / 定位</div>
+          <div class="grow">
+            <div class="field"><label>宽</label><input type="text" id="w" placeholder="auto"></div>
+            <div class="field"><label>高</label><input type="text" id="h" placeholder="auto"></div>
+            <div class="field"><label>透明度</label><input type="range" id="op" min="0" max="100" value="100"></div>
+          </div>
+          <div class="grow" style="margin-top:8px">
+            <div class="field"><label>定位</label><select id="pos"><option value="">流式（按顺序排列）</option><option value="relative">相对</option><option value="absolute">绝对（自由摆放）</option></select></div>
+            <div class="field"><label>左(px)</label><input type="number" id="l"></div>
+            <div class="field"><label>上(px)</label><input type="number" id="t"></div>
+          </div>
+          <div class="grow" style="margin-top:8px">
+            <div class="field"><label>层级 z-index</label><input type="number" id="z"></div>
+          </div>
+        </div>
+
+        <div class="igroup" id="g-grid" style="display:none">
+          <div class="g-title">网格布局</div>
+          <div class="grow">
+            <div class="field"><label>布局方式</label>
+              <select id="gridMode">
+                <option value="grid">网格（行列线）</option>
+                <option value="flex">弹性盒子（可调格宽高）</option>
+              </select>
+            </div>
+            <div class="field"><label>列数</label><input type="number" id="gridCols" min="1" max="12" value="3"></div>
+            <div class="field"><label>行数</label><input type="number" id="gridRows" min="1" max="12" value="2"></div>
+          </div>
+          <div class="grow" style="margin-top:8px">
+            <div class="field" id="gridCellWWrap"><label>格子默认宽(%, 弹性)</label><input type="number" id="gridCellW" min="5" max="100" value="30"></div>
+            <div class="field"><label>间距(px)</label><input type="number" id="gridGap" min="0" max="60"></div>
+          </div>
+          <div class="note" style="margin-top:8px;margin-bottom:0">每个虚线格是一个小容器：点击选中后可在「尺寸/背景/边框」中设置样式；组件可拖入格内并自由拖动。「弹性盒子」模式下<b>列数 × 行数</b>决定格子数量，格子按设定宽度自动换行排列，可单独调整格宽高改变排列。</div>
+        </div>
+
+        <div class="igroup" id="g-special">
+          <div class="g-title">链接 / 跳转 / 图片</div>
+          <div class="grow">
+            <div class="field wide" id="row-href" style="display:none"><label>链接地址</label><input type="text" id="hrefIn" placeholder="https://..."></div>
+            <div class="field wide" id="row-btn" style="display:none"><label>按钮跳转链接</label><input type="text" id="btnHref" placeholder="https://...（导出后点击跳转）"></div>
+            <div class="field wide" id="row-src" style="display:none"><label>图片地址（支持本地路径，如 E:\图片\a.png）</label><input type="text" id="srcIn" placeholder="E:\图片\a.png 或 https://..."></div>
+          </div>
+        </div>
+
+        <button class="b-btn warn" id="btnReset" style="margin-top:4px">↺ 重置该组件样式</button>
+      </div>
+    </div>
+
+    <!-- 动画面板 -->
+    <div class="pane" id="pane-anim">
+      <div class="note" id="animEmpty">在画布中选择一个组件，即可为其添加动画。<br>可叠加多个效果组合：<b>同时播放</b>或<b>依次播放</b>。</div>
+      <div id="animArea" style="display:none">
+        <button class="b-btn accent" id="animAdd">＋ 添加动画效果</button>
+        <div class="sel-row">
+          <label>播放方式</label>
+          <select id="animMode" style="flex:1;padding:5px 7px;border:1px solid var(--line);border-radius:6px">
+            <option value="parallel">同时播放（组合叠加）</option>
+            <option value="sequence">依次播放（按顺序衔接）</option>
+          </select>
+        </div>
+        <div class="note" style="margin-top:6px">组合建议：同时播放时选不同属性的效果（如 淡入 + 旋转）；「依次」会自动按顺序衔接各效果。</div>
+        <div id="animList"></div>
+        <div class="grow" style="gap:8px">
+          <button class="b-btn" id="animPreview" style="flex:1;margin-bottom:0">▶ 预览</button>
+          <button class="b-btn" id="animStop" style="flex:1;margin-bottom:0">■ 停止</button>
+        </div>
+        <button class="b-btn warn" id="animClear" style="margin-top:8px">清除全部动画</button>
+        <details class="custom-details">
+          <summary>⚙ 自定义关键帧动画</summary>
+          <div class="cf-grid">
+            <div class="cf-side">
+              <h5>起始状态 (from)</h5>
+              <label>透明度 <input type="number" id="cf_op0" value="0" step="0.1" min="0" max="1"></label>
+              <label>X位移 <input type="number" id="cf_tx0" value="0"></label>
+              <label>Y位移 <input type="number" id="cf_ty0" value="40"></label>
+              <label>缩放 <input type="number" id="cf_sc0" value="1" step="0.1"></label>
+              <label>旋转° <input type="number" id="cf_ro0" value="0"></label>
+            </div>
+            <div class="cf-side">
+              <h5>结束状态 (to)</h5>
+              <label>透明度 <input type="number" id="cf_op1" value="1" step="0.1" min="0" max="1"></label>
+              <label>X位移 <input type="number" id="cf_tx1" value="0"></label>
+              <label>Y位移 <input type="number" id="cf_ty1" value="0"></label>
+              <label>缩放 <input type="number" id="cf_sc1" value="1" step="0.1"></label>
+              <label>旋转° <input type="number" id="cf_ro1" value="0"></label>
+            </div>
+          </div>
+          <div class="sel-row" style="margin-top:8px">
+            <label>名称</label>
+            <input type="text" id="cf_name" placeholder="myAnim" style="flex:1;padding:5px 7px;border:1px solid var(--line);border-radius:6px">
+          </div>
+          <button class="b-btn accent" id="btnCustomAdd" style="margin-top:8px">生成并添加为动画</button>
+        </details>
+      </div>
+    </div>
+
+    <!-- 页面面板 -->
+    <div class="pane" id="pane-page">
+      <div class="igroup">
+        <div class="g-title">页面信息</div>
+        <div class="grow">
+          <div class="field"><label>页面标题</label><input type="text" id="pageTitle" placeholder="我的网页"></div>
+          <div class="field"><label>画布宽度(px)</label><input type="number" id="pageWidth" min="320" max="2000"></div>
+        </div>
+        <div class="grow" style="margin-top:8px">
+          <div class="field"><label>页面字体</label><select id="pageFont">
+            <option value="">系统默认</option>
+            <option value="'Microsoft YaHei','微软雅黑',sans-serif">微软雅黑</option>
+            <option value="'SimSun','宋体',serif">宋体</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Courier New', monospace">Courier New</option>
+          </select></div>
+        </div>
+      </div>
+
+      <div class="igroup">
+        <div class="g-title">页面背景</div>
+        <div class="grow">
+          <div class="field"><label>背景颜色</label><input type="color" id="bgColorPage" value="#ffffff"></div>
+        </div>
+        <div class="grow" style="margin-top:8px">
+          <div class="field wide"><label>渐变</label><input type="text" id="gradPage" placeholder="linear-gradient(135deg,#667eea,#764ba2)"></div>
+        </div>
+        <div class="grow" style="margin-top:8px">
+          <div class="field wide"><label>背景图片 URL（支持本地路径）</label><input type="text" id="bgImagePage" placeholder="E:\图片\bg.jpg 或 https://..."></div>
+        </div>
+        <div class="note" style="margin-top:8px">优先级：图片 &gt; 渐变 &gt; 纯色</div>
+      </div>
+
+      <div class="note">也可以在画布空白处<b>右键</b>快捷设置页面背景。</div>
+    </div>
+  </aside>
+</div>
+
+<!-- ============ 导出弹窗 ============ -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-head"><h3>📄 导出代码</h3><button class="x" id="btnCloseExport">✕</button></div>
+    <div class="modal-body">
+      <div class="exp-mode">
+        <label><input type="radio" name="expMode" value="single" checked> 单一 HTML 文件</label>
+        <label><input type="radio" name="expMode" value="multi"> HTML + CSS + JS 分离（打包下载）</label>
+      </div>
+      <div class="exp-tabs" id="expTabs">
+        <button class="exp-tab active" data-file="index.html">index.html</button>
+        <button class="exp-tab" data-file="style.css">style.css</button>
+        <button class="exp-tab" data-file="script.js">script.js</button>
+      </div>
+      <div class="note" id="expNote">以下为格式化的完整独立 HTML 代码，可直接保存为 .html 文件在浏览器中打开，或嵌入到任意项目。</div>
+      <textarea id="exportCode" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn" id="btnCopyCode">📋 复制代码</button>
+      <button class="m-btn accent" id="btnDownload">⬇ 下载文件</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 全屏预览 ============ -->
+<div id="previewOverlay">
+  <div class="pv-top">
+    <b>👁 页面预览</b>
+    <button class="m-btn" id="btnClosePreview">✕ 关闭预览 (Esc)</button>
+  </div>
+  <iframe id="previewFrame"></iframe>
+</div>
+
+<!-- ============ 效果选择器 ============ -->
+<div id="effectPicker">
+  <div class="ep-panel">
+    <h4>✨ 选择动画效果</h4>
+    <div class="ep-grid" id="effectGrid"></div>
+  </div>
+</div>
+
+<!-- ============ 帮助 ============ -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <div class="modal-head"><h3>❓ 使用帮助</h3><button class="x" id="btnCloseHelp">✕</button></div>
+    <div class="modal-body">
+      <ol>
+        <li><b>添加组件：</b>从左侧组件库<b>拖拽</b>到画布任意位置（自由摆放），或点击组件添加；把组件拖进「容器 Box」可嵌套管理。</li>
+        <li><b>网格布局：</b>「网格布局」组件以相交的水平线与垂直线定义行列；选中后在右侧「样式」面板设置<b>列数 / 行数 / 间距</b>，列×行决定格子数量；每个虚线格是小容器，可点击选中并设置样式、逐个放入组件；切到「弹性盒子」模式后格子按设定宽度自动换行排列，可单独调整格宽高改变排列。</li>
+        <li><b>图片：</b>图片组件的「图片地址」支持网址与<b>本地路径</b>（如 <code>E:\图片\a.png</code>，会自动转换为浏览器可用的 file:// 地址），也可在页面面板设置本地背景图。</li>
+        <li><b>组件目录：</b>画布与右侧面板之间的「组件目录」列出所有已添加组件（含容器内的子组件），点击可选中并定位，<b>双击</b>可为组件命名（右键目录项可重命名 / 删除）。</li>
+        <li><b>编辑文字：</b><b>双击</b>组件进入文字编辑（列表 / 段落 / 标题 / 按钮等均可），点击其它位置结束；图标组件清空文字后保持为空。</li>
+        <li><b>超链接：</b>右键文字组件选「设为超链接」，再右键选「设置链接地址」；按钮可在右键或右侧面板设置跳转链接。</li>
+        <li><b>样式：</b>复杂样式在右侧「样式」面板调整，面板会按组件类型自动隐藏不匹配的选项（如分割线 / 图片无文本与背景设置）。</li>
+        <li><b>页面背景：</b>在画布<b>空白处右键</b>快捷设置，或在右侧「页面」面板调整。</li>
+        <li><b>动画：</b>选中组件 → 右侧「动画」面板 → 添加多个效果：<b>同时播放</b>（组合叠加，transform 类效果真正合成，如 上浮+放大 同时生效）或<b>依次播放</b>（自动累加延迟，实现「动画1 延迟跟随 动画2」）；还可生成自定义关键帧动画。改动即时预览。</li>
+        <li><b>磁吸吸附：</b>点击工具栏「🧲 磁吸吸附」开关，开启后拖动组件（含容器内的组件）靠近其它组件时，会自动吸附对齐其顶部 / 底部 / 中部（带参考线提示）。</li>
+        <li><b>移动与缩放：</b>组件默认可自由拖拽摆放（图片也可拖动）；拖拽选中框四角与四边手柄缩放；方向键微调位置（Shift 加速）。</li>
+        <li><b>导出：</b>「导出代码」可选择<b>单一 HTML 文件</b>或<b>HTML + CSS + JS 分离</b>；分离模式中组件样式写入 style.css（按选择器关联）、动画由 script.js 通过选择器应用，点击「下载文件」打包为 ZIP，解压后即独立文件夹（index.html / style.css / script.js）。</li>
+        <li><b>页面设置：</b>点击左侧栏左下角「⚙ 页面设置」，可调整<b>非编辑区</b>（顶栏、左右侧栏、画布外底色与界面控件）的配色与样式，内置默认浅色 / 深色 / 天空蓝 / 暖阳橙 / 森林绿预设，也可逐项自定义，设置会随作品一起自动保存。</li>
+        <li>工作内容<b>自动保存</b>在浏览器本地，下次打开自动恢复。</li>
+        <li><b>如有问题可联系：1987357991@qq.com</b></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ============ 页面设置（非编辑区配色/样式） ============ -->
+<div class="modal-overlay" id="pageSettingsModal">
+  <div class="modal">
+    <div class="modal-head"><h3>⚙ 页面设置</h3><button class="x" id="btnClosePageSettings">✕</button></div>
+    <div class="modal-body">
+      <div class="note">以下设置作用于<b>非编辑区</b>（顶栏、左右侧栏、画布外底色与界面控件）；编辑区内的页面内容请用右侧「页面」面板设置。</div>
+      <div class="theme-presets">
+        <button class="theme-preset on" data-preset="default">默认浅色</button>
+        <button class="theme-preset" data-preset="dark">深色</button>
+        <button class="theme-preset" data-preset="blue">天空蓝</button>
+        <button class="theme-preset" data-preset="warm">暖阳橙</button>
+        <button class="theme-preset" data-preset="green">森林绿</button>
+      </div>
+      <div class="theme-grid">
+        <div class="theme-row"><label>顶栏主色</label><input type="color" data-theme="accent"></div>
+        <div class="theme-row"><label>顶栏辅色</label><input type="color" data-theme="accent2"></div>
+        <div class="theme-row"><label>顶栏文字</label><input type="color" data-theme="tbText"></div>
+        <div class="theme-row"><label>侧栏背景</label><input type="color" data-theme="panel"></div>
+        <div class="theme-row"><label>画布外底色</label><input type="color" data-theme="bg"></div>
+        <div class="theme-row"><label>卡片/输入背景</label><input type="color" data-theme="surface"></div>
+        <div class="theme-row"><label>次级背景</label><input type="color" data-theme="surface2"></div>
+        <div class="theme-row"><label>悬停高亮</label><input type="color" data-theme="hover"></div>
+        <div class="theme-row"><label>分割线</label><input type="color" data-theme="line"></div>
+        <div class="theme-row"><label>主文字</label><input type="color" data-theme="text"></div>
+        <div class="theme-row"><label>次要文字</label><input type="color" data-theme="muted"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="m-btn" id="btnThemeReset">恢复默认</button>
+      <button class="m-btn accent" id="btnClosePageSettingsOk">完成</button>
+    </div>
+  </div>
+</div>
+
+<style id="kfStyle"></style>
+
+<script src="page-builder.js"></script>
+</body>
+</html>
